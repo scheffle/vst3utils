@@ -5,7 +5,9 @@ project(vst3utils VERSION 1.0.0)
 add_library(vst3utils INTERFACE
 	"include/vst3utils/enum_array.h"
 	"include/vst3utils/event_iterator.h"
+	"include/vst3utils/message.h"
 	"include/vst3utils/norm_plain_conversion.h"
+	"include/vst3utils/parameter_changes_iterator.h"
 	"include/vst3utils/parameter_description.h"
 	"include/vst3utils/parameter_updater.h"
 	"include/vst3utils/parameter.h"

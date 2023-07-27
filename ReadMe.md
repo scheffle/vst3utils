@@ -24,6 +24,9 @@ add_target_dependency(myTarget
 
 ## History
 
+- **Version 1.1.0** [08/03/2023]
+	- added messages.h and parameter_changes_iterator.h
+	- a few additions else where, see git commit history
 - **Version 1.0.0** [07/16/2023]
 	- initial release
 
@@ -39,6 +42,13 @@ add_target_dependency(myTarget
 - `vst3utils::event_iterator`
 	- a c++ compatible forward iterator for `Steinberg::Vst::Event`
 
+### `#include "vst3utils/message.h"`
+
+- `vst3utils::message`
+	- an adapter for Steinberg::Vst::IMessage
+- `vst3utils::attribute_list`
+	- an adapter for Steinberg::Vst::IAttributeList
+
 ### `#include "vst3utils/norm_plain_conversion.h`
 
 contains functions to convert from normalized to plain and back
@@ -49,6 +59,13 @@ contains functions to convert from normalized to plain and back
 - `vst3utils::plain_to_normalized`
 - `vst3utils::steps_to_normalized`
 - `vst3utils::exp_to_normalized`
+
+### `#include "vst3utils/parameter_changes_iterator.h`
+
+- `vst3utils::parameter_changes_iterator`
+	- a c++ compatible forward iterator for `Steinberg::Vst::IParameterChanges`
+- `vst3utils::parameter_value_queue_iterator`
+	- a c++ compatible forward iterator for `Steinberg::Vst::IParamValueQueue`
 
 ### `#include "vst3utils/parameter_description.h`
 

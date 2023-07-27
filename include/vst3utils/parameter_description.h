@@ -41,7 +41,7 @@ strings must be equal to the number of steps.
 struct step_count
 {
 	uint32_t num_steps {0};
-	uint32_t start_value {0};
+	int32_t start_value {0};
 	const char16_t* unit {nullptr};
 	const char16_t* const* string_list {nullptr};
 };
@@ -75,7 +75,7 @@ static const constexpr std::array strings_on_off = {u"off", u"on"};
 
 //------------------------------------------------------------------------
 template<typename array_t>
-inline constexpr step_count make_step_count (array_t&& a, uint32_t start_value = 0,
+inline constexpr step_count make_step_count (array_t&& a, int32_t start_value = 0,
 											 const char16_t* unit = nullptr)
 {
 	return {static_cast<uint32_t> (a.size () - 1), start_value, unit, a.data ()};
@@ -176,6 +176,16 @@ inline constexpr description range_description (const char16_t* name, double def
 {
 	return {name, f.to_normalized (default_plain),
 			range {f.to_plain (0.), f.to_plain (1.), precision, unit}, f};
+}
+
+//------------------------------------------------------------------------
+inline constexpr description steps_description (const char16_t* name, double default_plain,
+												convert_functions f, const char16_t* unit = nullptr)
+{
+	return {name, f.to_normalized (default_plain),
+			step_count {static_cast<uint32_t> (f.to_plain (1.) - f.to_plain (0.)),
+						static_cast<int32_t> (f.to_plain (0.)), unit},
+			f};
 }
 
 //------------------------------------------------------------------------

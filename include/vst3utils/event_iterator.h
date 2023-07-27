@@ -36,24 +36,28 @@ struct event_iterator
 	using IEventList = Steinberg::Vst::IEventList;
 	using Event = Steinberg::Vst::Event;
 
-	event_iterator () : event_list (nullptr), index (-1) {}
-	event_iterator (IEventList& event_list) : event_list (&event_list), index (-1) {}
-	event_iterator (IEventList& event_list, int32_t index) : event_list (&event_list), index (index)
+	SMTG_ALWAYS_INLINE event_iterator () : event_list (nullptr), index (-1) {}
+	SMTG_ALWAYS_INLINE event_iterator (IEventList& event_list)
+	: event_list (&event_list), index (-1)
+	{
+	}
+	SMTG_ALWAYS_INLINE event_iterator (IEventList& event_list, int32_t index)
+	: event_list (&event_list), index (index)
 	{
 		update_event ();
 	}
 
-	bool operator== (const event_iterator& it) const
+	SMTG_ALWAYS_INLINE bool operator== (const event_iterator& it) const
 	{
 		return index == it.index && it.event_list == event_list;
 	}
 
-	bool operator!= (const event_iterator& it) const
+	SMTG_ALWAYS_INLINE bool operator!= (const event_iterator& it) const
 	{
 		return index != it.index || it.event_list != event_list;
 	}
 
-	event_iterator& operator++ () noexcept
+	SMTG_ALWAYS_INLINE event_iterator& operator++ () noexcept
 	{
 		if (index >= 0)
 			++index;
@@ -61,7 +65,7 @@ struct event_iterator
 		return *this;
 	}
 
-	event_iterator operator+= (size_t adv) noexcept
+	SMTG_ALWAYS_INLINE event_iterator operator+= (size_t adv) noexcept
 	{
 		auto prev = *this;
 		index += static_cast<int32_t> (adv);
@@ -69,11 +73,11 @@ struct event_iterator
 		return prev;
 	}
 
-	Event& operator* () { return e; }
-	Event* operator->() { return &e; }
+	SMTG_ALWAYS_INLINE Event& operator* () { return e; }
+	SMTG_ALWAYS_INLINE Event* operator->() { return &e; }
 
 private:
-	void update_event ()
+	SMTG_ALWAYS_INLINE void update_event ()
 	{
 		if (!event_list || event_list->getEvent (index, e) != Steinberg::kResultTrue)
 			index = -1;
@@ -85,13 +89,13 @@ private:
 };
 
 //------------------------------------------------------------------------
-inline event_iterator begin (Steinberg::Vst::IEventList* event_list)
+SMTG_ALWAYS_INLINE event_iterator begin (Steinberg::Vst::IEventList* event_list)
 {
 	return event_list ? event_iterator (*event_list, 0) : event_iterator ();
 }
 
 //------------------------------------------------------------------------
-inline event_iterator end (Steinberg::Vst::IEventList* event_list)
+SMTG_ALWAYS_INLINE event_iterator end (Steinberg::Vst::IEventList* event_list)
 {
 	return event_list ? event_iterator (*event_list, -1) : event_iterator ();
 }

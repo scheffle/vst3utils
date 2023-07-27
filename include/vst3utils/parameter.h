@@ -72,6 +72,7 @@ public:
 					  int32_t flags = Flags::kCanAutomate);
 
 	inline param_value getPlain () const { return toPlain (getNormalized ()); }
+	inline void setPlain (param_value plain) { setNormalized (toNormalized (plain)); }
 
 	//-- overrides
 	inline bool setNormalized (param_value v) override;
@@ -79,6 +80,7 @@ public:
 	inline bool fromString (const tchar* string, param_value& valueNormalized) const override;
 	inline param_value toPlain (param_value valueNormalized) const override;
 	inline param_value toNormalized (param_value plainValue) const override;
+	inline void changed (Steinberg::int32 msg = kChanged) override;
 
 	//--- listener
 	using value_changed_func = std::function<void (parameter&, param_value)>;
@@ -200,11 +202,6 @@ inline void parameter::remove_listener (token t)
 inline bool parameter::setNormalized (param_value v)
 {
 	auto res = Steinberg::Vst::Parameter::setNormalized (v);
-	if (res)
-	{
-		std::for_each (listeners.begin (), listeners.end (),
-					   [this] (const auto& p) { p.first (*this, getNormalized ()); });
-	}
 	return res;
 }
 
@@ -274,7 +271,7 @@ inline bool parameter::fromString (const tchar* string, param_value& value_norma
 								std::chars_format::fixed);
 	if (res.ec == std::errc ())
 	{
-		valueNormalized = toNormalized (value);
+		value_normalized = toNormalized (value);
 		return true;
 	}
 #else
@@ -312,6 +309,17 @@ inline auto parameter::toNormalized (param_value plainValue) const -> param_valu
 	}
 	auto range = std::get<param::range> (desc.range_or_step_count);
 	return plain_to_normalized (range.min, range.max, plainValue);
+}
+
+//------------------------------------------------------------------------
+inline void parameter::changed (Steinberg::int32 msg)
+{
+	Steinberg::Vst::Parameter::changed (msg);
+	if (msg == kChanged)
+	{
+		std::for_each (listeners.begin (), listeners.end (),
+					   [this] (const auto& p) { p.first (*this, getNormalized ()); });
+	}
 }
 
 //------------------------------------------------------------------------
