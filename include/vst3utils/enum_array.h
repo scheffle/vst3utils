@@ -42,33 +42,33 @@ It is also possible to specify an offset where the enum values start
 		enum_end
 	};
 
-	using fruits_array = enum_array<double, fruits, static_cast<size_t> (fruits::orange)>
+	using fruits_array = enum_array<double, fruits, static_cast<std::size_t> (fruits::orange)>
 	fruits_array f;
 	f[fruits::apple] = 2.6;
  */
-template<typename T, typename enum_t, size_t index_offset = 0u,
-		 size_t array_size = static_cast<size_t> (enum_t::enum_end) - index_offset>
+template<typename T, typename enum_t, std::size_t index_offset = 0u,
+		 std::size_t array_size = static_cast<std::size_t> (enum_t::enum_end) - index_offset>
 struct enum_array : std::array<T, array_size>
 {
 	using base_t = std::array<T, array_size>;
 
-	static constexpr size_t count () noexcept { return array_size; }
+	static constexpr std::size_t count () noexcept { return array_size; }
 
 	T& operator[] (enum_t index)
 	{
-		return base_t::operator[] (static_cast<size_t> (index) - index_offset);
+		return base_t::operator[] (static_cast<std::size_t> (index) - index_offset);
 	}
 	const T& operator[] (enum_t index) const noexcept
 	{
-		return base_t::operator[] (static_cast<size_t> (index) - index_offset);
+		return base_t::operator[] (static_cast<std::size_t> (index) - index_offset);
 	}
-	const T& operator[] (size_t index) const noexcept
+	const T& operator[] (std::size_t index) const noexcept
 	{
 		return base_t::operator[] (index - index_offset);
 	}
-	T& operator[] (size_t index) noexcept { return base_t::operator[] (index - index_offset); }
+	T& operator[] (std::size_t index) noexcept { return base_t::operator[] (index - index_offset); }
 
-	void set (size_t index, const T& value) noexcept
+	void set (std::size_t index, const T& value) noexcept
 	{
 		base_t::operator[] (index - index_offset) = value;
 	}
