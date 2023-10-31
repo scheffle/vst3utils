@@ -24,6 +24,7 @@ add_target_dependency(myTarget
 
 ## History
 
+	- added dB to gain functions
 - **Version 1.1.0** [08/03/2023]
 	- added messages.h and parameter_changes_iterator.h
 	- a few additions else where, see git commit history
@@ -59,6 +60,8 @@ contains functions to convert from normalized to plain and back
 - `vst3utils::plain_to_normalized`
 - `vst3utils::steps_to_normalized`
 - `vst3utils::exp_to_normalized`
+- `vst3utils::db_to_gain`
+- `vst3utils::gain_to_db`
 
 ### `#include "vst3utils/parameter_changes_iterator.h`
 

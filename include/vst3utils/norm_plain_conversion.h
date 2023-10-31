@@ -65,4 +65,18 @@ inline constexpr T exp_to_normalized (T min, T max, T plain_value) noexcept
 }
 
 //------------------------------------------------------------------------
+template<typename T>
+inline constexpr T gain_to_db (T gain_value) noexcept
+{
+	return static_cast<T> (20. * gcem::log10 (gain_value));
+}
+
+//------------------------------------------------------------------------
+template<typename T>
+inline constexpr T db_to_gain (T db_value) noexcept
+{
+	return static_cast<T> (gcem::pow (10, db_value / 20.));
+}
+
+//------------------------------------------------------------------------
 } // vst3utils
