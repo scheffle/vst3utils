@@ -9,6 +9,7 @@
 #pragma once
 
 #include "pluginterfaces/vst/ivstmessage.h"
+#include <limits>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -235,7 +236,13 @@ inline std::optional<value_t> attribute_list::get (attribute_id aId) const
 	{
 		Steinberg::int64 v {};
 		if (list->getInt (aId, v) == Steinberg::kResultTrue)
+		{
+			if (v > std::numeric_limits<value_t>::max ())
+				return {};
+			if (v < std::numeric_limits<value_t>::min ())
+				return {};
 			return std::make_optional (static_cast<value_t> (v));
+		}
 	}
 	return {};
 }
@@ -249,7 +256,13 @@ inline std::optional<value_t> attribute_list::get (attribute_id aId) const
 	{
 		double v {};
 		if (list->getFloat (aId, v) == Steinberg::kResultTrue)
+		{
+			if (v > std::numeric_limits<value_t>::max ())
+				return {};
+			if (v < std::numeric_limits<value_t>::min ())
+				return {};
 			return std::make_optional (static_cast<value_t> (v));
+		}
 	}
 	return {};
 }
