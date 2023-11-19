@@ -237,10 +237,21 @@ inline std::optional<value_t> attribute_list::get (attribute_id aId) const
 		Steinberg::int64 v {};
 		if (list->getInt (aId, v) == Steinberg::kResultTrue)
 		{
-			if (v > std::numeric_limits<value_t>::max ())
-				return {};
-			if (v < std::numeric_limits<value_t>::min ())
-				return {};
+			if constexpr (std::is_signed_v<value_t>)
+			{
+				if (v > static_cast<Steinberg::int64> (std::numeric_limits<value_t>::max ()))
+					return {};
+				if (v < static_cast<Steinberg::int64> (std::numeric_limits<value_t>::min ()))
+					return {};
+			}
+			else
+			{
+				auto uv = static_cast<Steinberg::uint64> (v);
+				if (uv > static_cast<Steinberg::uint64> (std::numeric_limits<value_t>::max ()))
+					return {};
+				if (uv < static_cast<Steinberg::uint64> (std::numeric_limits<value_t>::min ()))
+					return {};
+			}
 			return std::make_optional (static_cast<value_t> (v));
 		}
 	}
@@ -257,10 +268,13 @@ inline std::optional<value_t> attribute_list::get (attribute_id aId) const
 		double v {};
 		if (list->getFloat (aId, v) == Steinberg::kResultTrue)
 		{
-			if (v > std::numeric_limits<value_t>::max ())
-				return {};
-			if (v < std::numeric_limits<value_t>::min ())
-				return {};
+			if constexpr (std::is_same_v<double, value_t> == false)
+			{
+				if (v > static_cast<double> (std::numeric_limits<value_t>::max ()))
+					return {};
+				if (v < static_cast<double> (std::numeric_limits<value_t>::min ()))
+					return {};
+			}
 			return std::make_optional (static_cast<value_t> (v));
 		}
 	}
