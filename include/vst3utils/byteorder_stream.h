@@ -15,6 +15,7 @@
 namespace vst3utils {
 
 //------------------------------------------------------------------------
+/** byte order */
 enum class byte_order
 {
 	little_endian = kLittleEndian,
@@ -23,36 +24,117 @@ enum class byte_order
 };
 
 //------------------------------------------------------------------------
-template<byte_order stream_byte_order, bool throw_on_error = false>
-struct byte_order_ibstream
+/** seek mode */
+enum class seek_mode
 {
-	using stream_ptr = Steinberg::IPtr<Steinberg::IBStream>;
-	byte_order_ibstream (stream_ptr&& stream);
-
-	struct Result
-	{
-		Steinberg::tresult return_code {};
-		size_t bytes {};
-		operator bool () const { return return_code == Steinberg::kResultTrue; }
-	};
-
-	template<typename T>
-	Result operator<< (const T& input) const;
-	template<typename T>
-	Result operator>> (T& output);
-
-	Result read (void* dest, size_t num_bytes);
-	Result write (const void* src, size_t num_bytes) const;
-
-private:
-	template<size_t size>
-	Result swapAndWrite (const uint8_t* buffer) const;
-	void swap (uint8_t* buffer, uint64_t size) const;
-
-	stream_ptr stream;
+	set,
+	current,
+	end
 };
 
 //------------------------------------------------------------------------
+/** I/O result */
+struct io_result
+{
+	Steinberg::tresult return_code {};
+	size_t bytes {};
+	operator bool () const { return return_code == Steinberg::kResultTrue; }
+};
+
+//------------------------------------------------------------------------
+/** an adapter to read/write byte ordered data to an IBStream
+
+The `stream_byte_order` template argument configures the byte order at compile time so that at
+runtime no check needs to be done if byte swapping needs to be done.
+
+The `throw_on_error` template argument configures at compile time if an exception is thrown the
+underlying IBStream returns anything else than kResultTrue.
+
+Examples:
+
+1) Writing simple types:
+
+	auto s = make_byte_order_stream<byte_order::little_endian> (ib_stream);
+	double my_double = 5.88;
+	stream << my_double;
+	int my_integer = 19;
+	stream << my_integer;
+
+2) Reading simple types:
+
+	auto s = make_byte_order_stream<byte_order::little_endian> (ib_stream);
+	double my_double;
+	stream >> my_double;
+	int my_integer;
+	stream >> my_integer;
+
+3) Writing an arry of data
+
+	auto s = make_byte_order_stream<byte_order::little_endian> (ib_stream);
+	std::vector<double> data;
+	data.resize (100);
+	stream.write (data.begin (), data.end ());
+
+3) Reading an arry of data
+
+	auto s = make_byte_order_stream<byte_order::little_endian> (ib_stream);
+	std::vector<double> data;
+	data.resize (100);
+	stream.read (data.begin (), data.end ());
+
+ */
+template<byte_order stream_byte_order, bool throw_on_error = false>
+struct byte_order_ibstream
+{
+	using ibstream_ptr = Steinberg::IPtr<Steinberg::IBStream>;
+
+	byte_order_ibstream (ibstream_ptr&& stream);
+	byte_order_ibstream (byte_order_ibstream&&) = default;
+	byte_order_ibstream (const byte_order_ibstream&) = default;
+	byte_order_ibstream& operator= (byte_order_ibstream&&) = default;
+	byte_order_ibstream& operator= (const byte_order_ibstream&) = default;
+
+	/** seek the stream to a new position */
+	io_result seek (seek_mode mode, int64_t position);
+	/** return the current stream position */
+	io_result tell () const;
+
+	/** read byte ordered data */
+	template<typename T>
+	io_result operator>> (T& output) const;
+	/** write byte ordered data */
+	template<typename T>
+	io_result operator<< (const T& input);
+
+	/** read byte ordered data */
+	template<typename iterator_t>
+	io_result read (iterator_t begin, iterator_t end) const;
+	/** write byte ordered data */
+	template<typename iterator_t>
+	io_result write (iterator_t begin, iterator_t end);
+
+	/** read byte ordered continues data */
+	template<typename T>
+	io_result read (T* dest, size_t count) const;
+	/** write byte ordered continues data */
+	template<typename T>
+	io_result write (const T* src, size_t count);
+
+	/** read bytes without byte order conversion */
+	io_result read_raw (void* dest, size_t num_bytes) const;
+	/** write bytes without byte order conversion */
+	io_result write_raw (const void* src, size_t num_bytes);
+
+private:
+	template<size_t size>
+	io_result swapAndWrite (const uint8_t* buffer);
+	void swap (uint8_t* buffer, uint64_t size) const;
+
+	ibstream_ptr stream;
+};
+
+//------------------------------------------------------------------------
+/** make a byte ordered stream */
 template<byte_order stream_byte_order, bool throw_on_error = false>
 byte_order_ibstream<stream_byte_order, throw_on_error>
 	make_byte_order_stream (Steinberg::IPtr<Steinberg::IBStream> stream)
@@ -75,15 +157,45 @@ struct io_error : std::runtime_error
 //------------------------------------------------------------------------
 template<byte_order stream_byte_order, bool throw_on_error>
 inline byte_order_ibstream<stream_byte_order, throw_on_error>::byte_order_ibstream (
-	stream_ptr&& stream)
+	ibstream_ptr&& stream)
 : stream (std::move (stream))
 {
 }
 
 //------------------------------------------------------------------------
 template<byte_order stream_byte_order, bool throw_on_error>
-auto byte_order_ibstream<stream_byte_order, throw_on_error>::read (void* dest, size_t num_bytes)
-	-> Result
+inline auto byte_order_ibstream<stream_byte_order, throw_on_error>::seek (seek_mode mode,
+																		  int64_t position)
+	-> io_result
+{
+	Steinberg::int64 new_position {};
+	auto result = stream->seek (position, static_cast<Steinberg::int32> (mode), &new_position);
+	if constexpr (throw_on_error)
+	{
+		if (result != Steinberg::kResultTrue)
+			throw io_error ("seek failure", result, position);
+	}
+	return {result, static_cast<size_t> (new_position)};
+}
+
+//------------------------------------------------------------------------
+template<byte_order stream_byte_order, bool throw_on_error>
+inline auto byte_order_ibstream<stream_byte_order, throw_on_error>::tell () const -> io_result
+{
+	Steinberg::int64 pos;
+	auto result = stream->tell (&pos);
+	if constexpr (throw_on_error)
+	{
+		if (result != Steinberg::kResultTrue)
+			throw io_error ("tell failure", result, pos);
+	}
+	return {result, static_cast<size_t> (pos)};
+}
+
+//------------------------------------------------------------------------
+template<byte_order stream_byte_order, bool throw_on_error>
+inline auto byte_order_ibstream<stream_byte_order, throw_on_error>::read_raw (
+	void* dest, size_t num_bytes) const -> io_result
 {
 	if (num_bytes > std::numeric_limits<Steinberg::int32>::max ())
 		return {Steinberg::kInvalidArgument, 0};
@@ -99,9 +211,9 @@ auto byte_order_ibstream<stream_byte_order, throw_on_error>::read (void* dest, s
 
 //------------------------------------------------------------------------
 template<byte_order stream_byte_order, bool throw_on_error>
-auto byte_order_ibstream<stream_byte_order, throw_on_error>::write (const void* src,
-																	size_t num_bytes) const
-	-> Result
+inline auto byte_order_ibstream<stream_byte_order, throw_on_error>::write_raw (const void* src,
+																			   size_t num_bytes)
+	-> io_result
 {
 	if (num_bytes > std::numeric_limits<Steinberg::int32>::max ())
 		return {Steinberg::kInvalidArgument, 0};
@@ -119,13 +231,91 @@ auto byte_order_ibstream<stream_byte_order, throw_on_error>::write (const void* 
 //------------------------------------------------------------------------
 template<byte_order stream_byte_order, bool throw_on_error>
 template<typename T>
-inline auto
-	byte_order_ibstream<stream_byte_order, throw_on_error>::operator<< (const T& input) const
-	-> Result
+inline auto byte_order_ibstream<stream_byte_order, throw_on_error>::read (T* dest,
+																		  size_t count) const
+	-> io_result
+{
+	auto result = read_raw (dest, count * sizeof (T));
+	if constexpr (stream_byte_order != byte_order::native_endian)
+	{
+		if (result)
+		{
+			for (auto i = 0u; i < count; ++i)
+				swap (reinterpret_cast<uint8_t*> (&dest[i]), sizeof (T));
+		}
+	}
+	return result;
+}
+
+//------------------------------------------------------------------------
+template<byte_order stream_byte_order, bool throw_on_error>
+template<typename T>
+inline auto byte_order_ibstream<stream_byte_order, throw_on_error>::write (const T* src,
+																		   size_t count)
+	-> io_result
+{
+	if constexpr (stream_byte_order != byte_order::native_endian)
+	{
+		size_t written_bytes {};
+		for (auto i = 0u; i < count; ++i)
+		{
+			auto res = (*this << src[i]);
+			if (!res)
+				return {res.return_code, written_bytes + res.bytes};
+			written_bytes += res.bytes;
+		}
+		return {Steinberg::kResultTrue, written_bytes};
+	}
+	return write_raw (src, count * sizeof (T));
+}
+
+//------------------------------------------------------------------------
+template<byte_order stream_byte_order, bool throw_on_error>
+template<typename iterator_t>
+inline auto byte_order_ibstream<stream_byte_order, throw_on_error>::read (iterator_t begin,
+																		  iterator_t end) const
+	-> io_result
+{
+	size_t read_bytes {};
+	while (begin != end)
+	{
+		auto sr = (*this >> *begin);
+		if (!sr)
+			return {sr.return_code, read_bytes + sr.bytes};
+		read_bytes += sr.bytes;
+		++begin;
+	}
+	return {Steinberg::kResultTrue, read_bytes};
+}
+
+//------------------------------------------------------------------------
+template<byte_order stream_byte_order, bool throw_on_error>
+template<typename iterator_t>
+inline auto byte_order_ibstream<stream_byte_order, throw_on_error>::write (iterator_t begin,
+																		   iterator_t end)
+	-> io_result
+{
+	size_t written_bytes {};
+	while (begin != end)
+	{
+		auto sr = (*this << *begin);
+		if (!sr)
+			return {sr.return_code, written_bytes + sr.bytes};
+		written_bytes += sr.bytes;
+		++begin;
+	}
+	return {Steinberg::kResultTrue, written_bytes};
+}
+
+//------------------------------------------------------------------------
+template<byte_order stream_byte_order, bool throw_on_error>
+template<typename T>
+inline auto byte_order_ibstream<stream_byte_order, throw_on_error>::operator<< (const T& input)
+	-> io_result
 {
 	static_assert (std::is_standard_layout<T>::value, "Supports only standard layout types");
 	if constexpr (stream_byte_order == byte_order::native_endian)
-		return write (static_cast<const void*> (&input), sizeof (T));
+		return write_raw (static_cast<const void*> (&input), sizeof (T));
 
 	return swapAndWrite<sizeof (T)> (reinterpret_cast<const uint8_t*> (&input));
 }
@@ -133,10 +323,11 @@ inline auto
 //------------------------------------------------------------------------
 template<byte_order stream_byte_order, bool throw_on_error>
 template<typename T>
-inline auto byte_order_ibstream<stream_byte_order, throw_on_error>::operator>> (T& output) -> Result
+inline auto byte_order_ibstream<stream_byte_order, throw_on_error>::operator>> (T& output) const
+	-> io_result
 {
 	static_assert (std::is_standard_layout<T>::value, "Supports only standard layout types");
-	auto res = read (&output, sizeof (T));
+	auto res = read_raw (&output, sizeof (T));
 	if constexpr (stream_byte_order == byte_order::native_endian)
 		return res;
 
@@ -147,8 +338,9 @@ inline auto byte_order_ibstream<stream_byte_order, throw_on_error>::operator>> (
 //------------------------------------------------------------------------
 template<byte_order stream_byte_order, bool throw_on_error>
 template<size_t _size>
-inline auto byte_order_ibstream<stream_byte_order, throw_on_error>::swapAndWrite (
-	const uint8_t* buffer) const -> Result
+inline auto
+	byte_order_ibstream<stream_byte_order, throw_on_error>::swapAndWrite (const uint8_t* buffer)
+		-> io_result
 {
 	if constexpr (_size > 1)
 	{
@@ -169,9 +361,9 @@ inline auto byte_order_ibstream<stream_byte_order, throw_on_error>::swapAndWrite
 			high -= 2;
 			size -= 2;
 		}
-		return write (tmp, _size);
+		return write_raw (tmp, _size);
 	}
-	return write (buffer, 1);
+	return write_raw (buffer, 1);
 }
 
 //------------------------------------------------------------------------

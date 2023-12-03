@@ -24,6 +24,7 @@ add_target_dependency(myTarget
 
 ## History
 
+	- added byte_order_stream.h
 	- added dB to gain functions
 - **Version 1.1.0** [08/03/2023]
 	- added messages.h and parameter_changes_iterator.h
@@ -32,6 +33,11 @@ add_target_dependency(myTarget
 	- initial release
 
 ## Headers
+
+### `#include "vst3utils/byte_order_stream.h`
+
+- `vst3utils::byte_order_ibstream`
+	- an adapter to read/write byte ordered data to an IBStream
 
 ### `#include "vst3utils/enum_array.h`
 
