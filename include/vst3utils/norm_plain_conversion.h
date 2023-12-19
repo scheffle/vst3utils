@@ -75,7 +75,8 @@ inline constexpr T gain_to_db (T gain_value) noexcept
 template<typename T>
 inline constexpr T db_to_gain (T db_value) noexcept
 {
-	return static_cast<T> (gcem::pow (10, db_value / 20.));
+	constexpr const auto inv20 = static_cast<T> (1. / 20.);
+	return static_cast<T> (gcem::pow (10, db_value * inv20));
 }
 
 //------------------------------------------------------------------------
