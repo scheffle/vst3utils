@@ -66,6 +66,9 @@ struct smooth_value
 	/** set the smoothed value to the actual value */
 	inline void flush () noexcept { smoothed_value = value; }
 
+	/** set the smoothed value and the actual value */
+	inline void set_flushed (T v) noexcept { smoothed_value = value = v; }
+
 private:
 	T alpha {0.1};
 	T value {0.};
