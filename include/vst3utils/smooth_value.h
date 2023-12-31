@@ -26,6 +26,12 @@ struct smooth_value
 	static const constexpr T alpha_min = static_cast<T> (0.);
 	static const constexpr T alpha_max = static_cast<T> (1.);
 
+	smooth_value (T initalValue = {}, T alpha = 0.1) : value (initalValue), alpha (alpha) { flush (); }
+	smooth_value (const smooth_value&) = default;
+	smooth_value (smooth_value&&) = default;
+	smooth_value& operator= (const smooth_value&) = default;
+	smooth_value& operator= (smooth_value&&) = default;
+
 	/** smooth the parameter further and return the smoothed value */
 	inline T process () noexcept
 	{
