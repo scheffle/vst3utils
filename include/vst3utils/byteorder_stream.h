@@ -47,7 +47,7 @@ struct io_result
 The `stream_byte_order` template argument configures the byte order at compile time so that at
 runtime no check needs to be done if byte swapping needs to be done.
 
-The `throw_on_error` template argument configures at compile time if an exception is thrown the
+The `throw_on_error` template argument configures at compile time if an exception is thrown if the
 underlying IBStream returns anything else than kResultTrue.
 
 Examples:
