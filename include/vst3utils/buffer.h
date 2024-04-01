@@ -9,6 +9,7 @@
 #pragma once
 
 #include <cstdlib>
+#include <algorithm>
 
 #ifdef _MSC_VER
 #include <malloc.h>

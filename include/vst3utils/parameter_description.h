@@ -10,6 +10,7 @@
 
 #include "vst3utils/norm_plain_conversion.h"
 #include <variant>
+#include <array>
 
 //------------------------------------------------------------------------
 namespace vst3utils {

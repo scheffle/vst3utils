@@ -9,6 +9,7 @@
 #pragma once
 
 #include <cassert>
+#include <type_traits>
 
 //------------------------------------------------------------------------
 namespace vst3utils {
