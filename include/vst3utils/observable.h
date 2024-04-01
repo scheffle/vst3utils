@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include <cassert>
+#include <functional>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -77,13 +79,16 @@ private:
 	friend class observable<T>;
 };
 
+template<typename T>
+using observable_token_ptr = std::unique_ptr<observable_token<T>>;
+
 //------------------------------------------------------------------------
 template<typename T>
 class observable
 {
 public:
 	using observable_token = observable_token<T>;
-	using observable_token_ptr = std::unique_ptr<observable_token>;
+	using observable_token_ptr = observable_token_ptr<T>;
 
 	template<typename std::enable_if_t<std::is_default_constructible_v<T>>* = nullptr>
 	observable ()
@@ -131,7 +136,7 @@ template<typename T>
 observable<T>::~observable () noexcept
 {
 	for (auto& token : listeners)
-		token.first->value_destroyed ();
+		token.first->object_destroyed ();
 }
 
 //------------------------------------------------------------------------
@@ -170,10 +175,13 @@ template<typename T>
 void observable<T>::notify_listeners ()
 {
 	assert (is_editing == 1);
-	for (auto it = listeners.begin (); it != listeners.end (); ++it)
+	for (auto it = listeners.begin (); it != listeners.end ();)
 	{
 		if (it->second)
+		{
 			it->second (value);
+			++it;
+		}
 		else
 			it = listeners.erase (it);
 	}

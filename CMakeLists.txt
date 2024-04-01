@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14.0)
+cmake_minimum_required(VERSION 3.19.0)
 
 project(vst3utils VERSION 1.0.0)
 
@@ -26,3 +26,40 @@ target_compile_features(vst3utils
         cxx_std_17
 )
 
+option(VST3UTILS_TESTS "Enable unit test target" OFF)
+if(VST3UTILS_TESTS)
+
+	enable_testing()
+
+	set(BUILD_GMOCK 0)
+	set(INSTALL_GTEST 0)
+	add_subdirectory(tests/googletest)
+
+	add_executable(vst3utils_test
+		"tests/observable_test.cpp"
+	)
+
+	target_link_libraries(vst3utils_test
+		PRIVATE
+			vst3utils
+			gtest_main
+	)
+
+	target_compile_features(vst3utils_test
+		INTERFACE
+			cxx_std_17
+	)
+
+	if(CMAKE_XCODE_BUILD_SYSTEM EQUAL 12)
+		add_custom_command(
+			TARGET vst3utils_test
+			POST_BUILD
+			COMMAND 
+				codesign --force -s - $<TARGET_FILE:vst3utils_test>
+		)
+	endif()
+
+	include(GoogleTest)
+	gtest_discover_tests(vst3utils_test)
+	
+endif(VST3UTILS_TESTS)
