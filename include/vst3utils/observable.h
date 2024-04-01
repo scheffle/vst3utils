@@ -21,9 +21,9 @@ namespace vst3utils {
  *	an observable object wrapper that can inform listeners when the object changes
  *	without a need to store an object reference in the listener
  *
- *	when the listener token is destroyed the listener is removed from the
- *	observable object, and when the observable object is destroyed the listeners
- *	can check the tokens object_alive() function if the object is still valid.
+ *	when the observer token is destroyed the listener is removed from the observable object. And the
+ *	destruction of the observable object can be monitored by setting the object destroyed callback
+ *	in the observer token, and further the token can be asked if the object is still alive.
  *
  *	not thread safe, listeners and objects can only be used on the same thread
  *
@@ -32,33 +32,58 @@ namespace vst3utils {
  *		using observable_string = observable<std::string>;
  *
  *		observable_string my_string;
- *		auto listener_token = my_string.add_listener ([] (const std::string& str) { ... });
+ *		auto token = my_string.add_listener ([] (const std::string& str) { ... });
  *		my_string.edit ([] (const std::string& str) { str = "test"; return true; });
  *
  */
 template<typename T>
+class observable;
+
+//------------------------------------------------------------------------
+template<typename T>
+struct observable_token
+{
+	observable_token () = default;
+	~observable_token () noexcept
+	{
+		if (token_destroyed)
+			token_destroyed (this);
+	}
+
+	bool object_alive () const noexcept { return token_destroyed != nullptr; }
+
+	using object_destroyed_callback = std::function<void ()>;
+	void set_object_destroyed_callback (object_destroyed_callback&& f)
+	{
+		object_destroyed_cb = std::move (f);
+	}
+	void set_object_destroyed_callback (const object_destroyed_callback& f)
+	{
+		object_destroyed_cb = f;
+	}
+
+private:
+	using token_destroyed_callback = std::function<void (observable_token*)>;
+
+	void object_destroyed ()
+	{
+		token_destroyed = {};
+		if (object_destroyed_cb)
+			object_destroyed_cb ();
+	}
+
+	token_destroyed_callback token_destroyed;
+	object_destroyed_callback object_destroyed_cb;
+	friend class observable<T>;
+};
+
+//------------------------------------------------------------------------
+template<typename T>
 class observable
 {
 public:
-	struct listener_token
-	{
-		~listener_token () noexcept
-		{
-			if (token_destroyed)
-				token_destroyed (this);
-		}
-
-		bool object_alive () const noexcept { return token_destroyed != nullptr; }
-
-	private:
-		using token_destroyed_callback = std::function<void (listener_token*)>;
-
-		void object_destroyed () { token_destroyed = {}; }
-
-		token_destroyed_callback token_destroyed;
-		friend class observable<T>;
-	};
-	using listener_token_ptr = std::unique_ptr<listener_token>;
+	using observable_token = observable_token<T>;
+	using observable_token_ptr = std::unique_ptr<observable_token>;
 
 	template<typename std::enable_if_t<std::is_default_constructible_v<T>>* = nullptr>
 	observable ()
@@ -90,15 +115,15 @@ public:
 	}
 
 	using listener = std::function<void (const T&)>;
-	listener_token_ptr add_listener (listener&& listener) const;
+	observable_token_ptr add_listener (listener&& listener) const;
 
 private:
 	void notify_listeners ();
-	void remove_listener (listener_token* token);
+	void remove_listener (observable_token* token);
 
 	T value;
 	size_t is_editing {};
-	mutable std::vector<std::pair<listener_token*, listener>> listeners;
+	mutable std::vector<std::pair<observable_token*, listener>> listeners;
 };
 
 //------------------------------------------------------------------------
@@ -111,9 +136,9 @@ observable<T>::~observable () noexcept
 
 //------------------------------------------------------------------------
 template<typename T>
-auto observable<T>::add_listener (listener&& listener) const -> listener_token_ptr
+auto observable<T>::add_listener (listener&& listener) const -> observable_token_ptr
 {
-	auto token = std::make_unique<listener_token> ();
+	auto token = std::make_unique<observable_token> ();
 	token->token_destroyed = [This = const_cast<observable<T>*> (this)] (auto* token) {
 		This->remove_listener (token);
 	};
@@ -123,7 +148,7 @@ auto observable<T>::add_listener (listener&& listener) const -> listener_token_p
 
 //------------------------------------------------------------------------
 template<typename T>
-void observable<T>::remove_listener (listener_token* token)
+void observable<T>::remove_listener (observable_token* token)
 {
 	auto it = std::find_if (listeners.begin (), listeners.end (),
 							[&] (const auto& el) { return el.first == token; });
