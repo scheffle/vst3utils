@@ -37,6 +37,7 @@ if(VST3UTILS_TESTS)
 
 	add_executable(vst3utils_test
 		"tests/observable_test.cpp"
+		"tests/string_conversion_test.cpp"
 	)
 
 	target_link_libraries(vst3utils_test

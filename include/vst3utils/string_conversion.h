@@ -58,10 +58,15 @@ inline void copy_ascii_to_utf16 (std::string_view ascii, char16_t* start, char16
 		++start;
 		++src;
 	}
-	while (start != end)
+	if (start == end)
+		*(start - 1) = 0;
+	else
 	{
-		*start = 0;
-		++start;
+		while (start != end)
+		{
+			*start = 0;
+			++start;
+		}
 	}
 }
 
