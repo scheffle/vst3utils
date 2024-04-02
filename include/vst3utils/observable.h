@@ -106,6 +106,8 @@ public:
 	observable& operator= (observable&&) = delete;
 
 	const T& get () const { return value; }
+	operator const T* () const { return &get (); }
+	const T* operator->() const { return *this; }
 
 	template<typename Proc>
 	bool edit (Proc proc)
@@ -120,7 +122,7 @@ public:
 	}
 
 	using listener = std::function<void (const T&)>;
-	observable_token_ptr add_listener (listener&& listener) const;
+	[[nodiscard]] observable_token_ptr add_listener (listener&& listener) const;
 
 private:
 	void notify_listeners ();
