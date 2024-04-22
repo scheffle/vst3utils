@@ -135,6 +135,13 @@ struct attribute_list
 									   std::is_same_v<value_t, std::string_view>>* = nullptr>
 	inline std::optional<value_t> get (attribute_id aId) const;
 
+	/** get an utf-16 string value,
+	 *	string_size does not contain the terminating 0 character of the string
+	 */
+	template<typename value_t,
+			 typename std::enable_if_t<std::is_same_v<value_t, std::u16string>>* = nullptr>
+	inline std::optional<value_t> get (attribute_id aId, size_t string_size) const;
+
 	/** set binary data */
 	inline void set (attribute_id aId, const void* data, size_t data_size);
 
@@ -328,6 +335,26 @@ inline std::optional<value_t> attribute_list::get (attribute_id aId) const
 		{
 			return std::make_optional (
 				std::string (reinterpret_cast<const char*> (data), data_size));
+		}
+	}
+	return {};
+}
+
+//------------------------------------------------------------------------
+template<typename value_t, typename std::enable_if_t<std::is_same_v<value_t, std::u16string>>*>
+inline std::optional<value_t> attribute_list::get (attribute_id aId, size_t string_size) const
+{
+	if (list && string_size <= std::numeric_limits<Steinberg::uint32>::max ())
+	{
+		static_assert (sizeof (Steinberg::Vst::TChar) == sizeof (std::u16string::value_type),
+					   "Unsupported Platform");
+		std::u16string res;
+		res.resize (string_size);
+		if (list->getString (aId, res.data (),
+							 (1u + static_cast<Steinberg::uint32> (string_size)) *
+								 sizeof (Steinberg::Vst::TChar)) == Steinberg::kResultTrue)
+		{
+			return std::make_optional (std::move (res));
 		}
 	}
 	return {};
