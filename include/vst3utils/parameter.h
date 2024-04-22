@@ -15,6 +15,8 @@
 #include <functional>
 #include <string>
 #include <vector>
+#include <algorithm>
+#include <iterator>
 
 #if !defined(__cpp_lib_to_chars) || !defined(__cpp_lib_to_chars)
 #include "pluginterfaces/base/ustring.h"
