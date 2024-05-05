@@ -10,6 +10,7 @@
 
 #include <cstdlib>
 #include <algorithm>
+#include <cassert>
 
 #ifdef _MSC_VER
 #include <malloc.h>
