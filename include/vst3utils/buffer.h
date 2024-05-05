@@ -64,6 +64,12 @@ struct buffer final
 	const T* data () const { return buffer_ptr; }
 	size_t size () const { return num_buffer_elements; }
 
+	T* begin () { return &buffer_ptr[0]; }
+	T* end () { return &buffer_ptr[size ()]; }
+
+	const T* begin () const { return &buffer_ptr[0]; }
+	const T* end () const { return &buffer_ptr[size ()]; }
+
 private:
 	void deallocate ()
 	{
