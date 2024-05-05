@@ -35,7 +35,7 @@ struct range
 //------------------------------------------------------------------------
 /** Parameter step count description
 
-describes a parameter with a concret number of steps. if a stringList is provided the number of
+describes a parameter with a concret number of steps. if a string_list is provided the number of
 strings must be equal to the number of steps.
 
  */
