@@ -18,16 +18,29 @@ namespace vst3utils {
 //------------------------------------------------------------------------
 /** copy UTF-16 string to an ASCII string
  *
- *  all non ASCII characters are removed in this conversion
+ *  all non ASCII characters are replaced with replacement_char if it is greater zero
  */
+template<char replacement_char>
 inline std::string copy_utf16_to_ascii (std::u16string_view str)
 {
 	std::string result;
 	std::for_each (str.begin (), str.end (), [&result] (const auto& c) {
 		if (c >= 0 && c <= 127)
 			result.push_back (static_cast<char> (c));
+		else if constexpr (replacement_char > 0)
+			result.push_back (replacement_char);
 	});
 	return result;
+}
+
+//------------------------------------------------------------------------
+/** copy UTF-16 string to an ASCII string
+ *
+ *  all non ASCII characters are removed in this conversion
+ */
+inline std::string copy_utf16_to_ascii (std::u16string_view str)
+{
+	return copy_utf16_to_ascii<0> (str);
 }
 
 //------------------------------------------------------------------------

@@ -19,6 +19,11 @@ TEST (string_conversion_test, copy_utf16_to_ascii)
 	auto result = copy_utf16_to_ascii (utfStr);
 
 	EXPECT_EQ (result, "This is a string with  few uncode chractrs");
+
+	utfStr = u"This is a string with á few unícode chäractérs";
+	result = copy_utf16_to_ascii<'*'> (utfStr);
+
+	EXPECT_EQ (result, "This is a string with * few un*code ch*ract*rs");
 }
 
 //------------------------------------------------------------------------
@@ -57,6 +62,13 @@ TEST (string_conversion_test, copy_ascii_to_utf16)
 		copy_ascii_to_utf16 (asciiStr, std::begin (result), std::end (result));
 		std::u16string str (result);
 		EXPECT_EQ (str, u"This is a ASCII strin");
+	}
+	{
+		auto emptyAsciiString = "";
+		char16_t result[1];
+		copy_ascii_to_utf16 (emptyAsciiString, std::begin (result), std::end (result));
+		std::u16string str (result);
+		EXPECT_EQ (str, u"");
 	}
 }
 
