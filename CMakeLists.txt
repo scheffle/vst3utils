@@ -37,6 +37,7 @@ if(VST3UTILS_TESTS)
 
 	add_executable(vst3utils_test
 		"tests/buffer_test.cpp"
+		"tests/norm_plain_conversion_test.cpp"
 		"tests/observable_test.cpp"
 		"tests/string_conversion_test.cpp"
 	)
