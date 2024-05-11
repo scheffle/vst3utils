@@ -94,6 +94,10 @@ public:
 	observable () : value ()
 	{
 	}
+	template<typename std::enable_if_t<std::is_copy_constructible_v<T>>* = nullptr>
+	observable (const T& value) : value (value)
+	{
+	}
 	template<typename std::enable_if_t<std::is_move_constructible_v<T>>* = nullptr>
 	observable (T&& value) : value (std::move (value))
 	{

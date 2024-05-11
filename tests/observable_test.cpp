@@ -101,8 +101,15 @@ TEST (observable_test, default_constructor)
 {
 	using observable_double = observable<double>;
 
-	observable_double od;
-	EXPECT_DOUBLE_EQ (*od, 0.);
+	observable_double od1;
+	EXPECT_DOUBLE_EQ (*od1, 0.);
+
+	observable_double od2 (1.);
+	EXPECT_DOUBLE_EQ (*od2, 1.);
+
+	std::string test ("test");
+	obstring str (test);
+	EXPECT_EQ (str.get (), test);
 }
 
 //------------------------------------------------------------------------
