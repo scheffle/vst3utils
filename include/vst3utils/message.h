@@ -155,7 +155,7 @@ struct attribute_list
 	/** get a span value
 	 *
 	 *  returns the data as a span without copying it (data only valid as long as the attribute list
-	 * is not changed or destroyed)
+	 *  is not changed or destroyed)
 	 */
 	template<typename value_t, size_t num_elements,
 			 typename std::enable_if_t<std::is_standard_layout_v<value_t> &&
