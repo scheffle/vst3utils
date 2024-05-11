@@ -97,4 +97,13 @@ TEST (observable_test, remove_listener)
 }
 
 //------------------------------------------------------------------------
+TEST (observable_test, default_constructor)
+{
+	using observable_double = observable<double>;
+
+	observable_double od;
+	EXPECT_DOUBLE_EQ (*od, 0.);
+}
+
+//------------------------------------------------------------------------
 } // vst3utils

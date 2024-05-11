@@ -91,7 +91,7 @@ public:
 	using observable_token_ptr = observable_token_ptr<T>;
 
 	template<typename std::enable_if_t<std::is_default_constructible_v<T>>* = nullptr>
-	observable ()
+	observable () : value ()
 	{
 	}
 	template<typename std::enable_if_t<std::is_move_constructible_v<T>>* = nullptr>
