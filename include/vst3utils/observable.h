@@ -110,23 +110,15 @@ public:
 	const T* operator->() const { return *this; }
 
 	template<typename Proc>
-	bool edit (Proc proc)
-	{
-		if (is_editing > 0)
-			return false;
-		++is_editing;
-		if (proc (value))
-			notify_listeners ();
-		--is_editing;
-		return true;
-	}
+	bool edit (Proc proc);
 
 	using listener = std::function<void (const T&)>;
 	[[nodiscard]] observable_token_ptr add_listener (listener&& listener) const;
+	void remove_listener (observable_token_ptr& token) const;
 
 private:
 	void notify_listeners ();
-	void remove_listener (observable_token* token);
+	void remove_listener (observable_token* token) const;
 
 	T value;
 	size_t is_editing {};
@@ -155,7 +147,14 @@ auto observable<T>::add_listener (listener&& listener) const -> observable_token
 
 //------------------------------------------------------------------------
 template<typename T>
-void observable<T>::remove_listener (observable_token* token)
+void observable<T>::remove_listener (observable_token_ptr& token) const
+{
+	token.reset ();
+}
+
+//------------------------------------------------------------------------
+template<typename T>
+void observable<T>::remove_listener (observable_token* token) const
 {
 	auto it = std::find_if (listeners.begin (), listeners.end (),
 							[&] (const auto& el) { return el.first == token; });
@@ -187,6 +186,20 @@ void observable<T>::notify_listeners ()
 		else
 			it = listeners.erase (it);
 	}
+}
+
+//------------------------------------------------------------------------
+template<typename T>
+template<typename Proc>
+bool observable<T>::edit (Proc proc)
+{
+	if (is_editing > 0)
+		return false;
+	++is_editing;
+	if (proc (value))
+		notify_listeners ();
+	--is_editing;
+	return true;
 }
 
 //------------------------------------------------------------------------

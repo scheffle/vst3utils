@@ -83,4 +83,18 @@ TEST (observable_test, listener_removed_while_notifying_listeners)
 }
 
 //------------------------------------------------------------------------
+TEST (observable_test, remove_listener)
+{
+	obstring str;
+	uint32_t listener_call_count = 0u;
+	auto token = str.add_listener ([&] (const auto& str) { ++listener_call_count; });
+	str.edit ([] (auto& str) { return true; });
+	EXPECT_EQ (listener_call_count, 1);
+
+	str.remove_listener (token);
+	str.edit ([] (auto& str) { return true; });
+	EXPECT_EQ (listener_call_count, 1);
+}
+
+//------------------------------------------------------------------------
 } // vst3utils
