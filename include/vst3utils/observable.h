@@ -116,6 +116,8 @@ public:
 	template<typename Proc>
 	bool edit (Proc proc);
 
+	bool is_editing () const { return edit_count > 0; }
+
 	using listener = std::function<void (const T&)>;
 	[[nodiscard]] observable_token_ptr add_listener (listener&& listener) const;
 	void remove_listener (observable_token_ptr& token) const;
@@ -125,7 +127,7 @@ private:
 	void remove_listener (observable_token* token) const;
 
 	T value;
-	size_t is_editing {};
+	size_t edit_count {};
 	mutable std::vector<std::pair<observable_token*, listener>> listeners;
 };
 
@@ -164,7 +166,7 @@ void observable<T>::remove_listener (observable_token* token) const
 							[&] (const auto& el) { return el.first == token; });
 	if (it != listeners.end ())
 	{
-		if (is_editing != 0u)
+		if (edit_count != 0u)
 		{
 			it->second = nullptr;
 		}
@@ -179,7 +181,7 @@ void observable<T>::remove_listener (observable_token* token) const
 template<typename T>
 void observable<T>::notify_listeners ()
 {
-	assert (is_editing == 1);
+	assert (edit_count == 1);
 	for (auto it = listeners.begin (); it != listeners.end ();)
 	{
 		if (it->second)
@@ -197,12 +199,12 @@ template<typename T>
 template<typename Proc>
 bool observable<T>::edit (Proc proc)
 {
-	if (is_editing > 0)
+	if (edit_count > 0)
 		return false;
-	++is_editing;
+	++edit_count;
 	if (proc (value))
 		notify_listeners ();
-	--is_editing;
+	--edit_count;
 	return true;
 }
 
