@@ -45,16 +45,17 @@ class observable;
 template<typename T>
 struct observable_token
 {
+	using object_destroyed_callback = std::function<void ()>;
+
 	observable_token () = default;
 	~observable_token () noexcept
 	{
-		if (token_destroyed)
-			token_destroyed (this);
+		if (token_destroyed_cb)
+			token_destroyed_cb (this);
 	}
 
-	bool object_alive () const noexcept { return token_destroyed != nullptr; }
+	bool object_alive () const noexcept { return token_destroyed_cb != nullptr; }
 
-	using object_destroyed_callback = std::function<void ()>;
 	void set_object_destroyed_callback (object_destroyed_callback&& f)
 	{
 		object_destroyed_cb = std::move (f);
@@ -69,12 +70,12 @@ private:
 
 	void object_destroyed ()
 	{
-		token_destroyed = {};
+		token_destroyed_cb = {};
 		if (object_destroyed_cb)
 			object_destroyed_cb ();
 	}
 
-	token_destroyed_callback token_destroyed;
+	token_destroyed_callback token_destroyed_cb;
 	object_destroyed_callback object_destroyed_cb;
 	friend class observable<T>;
 };
@@ -87,8 +88,9 @@ template<typename T>
 class observable
 {
 public:
-	using observable_token = observable_token<T>;
-	using observable_token_ptr = observable_token_ptr<T>;
+	using token = observable_token<T>;
+	using token_ptr = observable_token_ptr<T>;
+	using listener = std::function<void (const T&)>;
 
 	template<typename std::enable_if_t<std::is_default_constructible_v<T>>* = nullptr>
 	observable () : value ()
@@ -118,49 +120,48 @@ public:
 
 	bool is_editing () const { return edit_count > 0; }
 
-	using listener = std::function<void (const T&)>;
-	[[nodiscard]] observable_token_ptr add_listener (listener&& listener) const;
-	void remove_listener (observable_token_ptr& token) const;
+	[[nodiscard]] token_ptr add_listener (listener&& listener) const;
+	void remove_listener (token_ptr& token) const;
 
 private:
 	void notify_listeners ();
-	void remove_listener (observable_token* token) const;
+	void remove_listener (token* token) const;
 
 	T value;
 	size_t edit_count {};
-	mutable std::vector<std::pair<observable_token*, listener>> listeners;
+	mutable std::vector<std::pair<token*, listener>> listeners;
 };
 
 //------------------------------------------------------------------------
 template<typename T>
 observable<T>::~observable () noexcept
 {
-	for (auto& token : listeners)
-		token.first->object_destroyed ();
+	for (auto& el : listeners)
+		el.first->object_destroyed ();
 }
 
 //------------------------------------------------------------------------
 template<typename T>
-auto observable<T>::add_listener (listener&& listener) const -> observable_token_ptr
+auto observable<T>::add_listener (listener&& listener) const -> token_ptr
 {
-	auto token = std::make_unique<observable_token> ();
-	token->token_destroyed = [This = const_cast<observable<T>*> (this)] (auto* token) {
+	auto lt = std::make_unique<token> ();
+	lt->token_destroyed_cb = [This = const_cast<observable<T>*> (this)] (auto* token) {
 		This->remove_listener (token);
 	};
-	listeners.emplace_back (token.get (), std::move (listener));
-	return token;
+	listeners.emplace_back (lt.get (), std::move (listener));
+	return lt;
 }
 
 //------------------------------------------------------------------------
 template<typename T>
-void observable<T>::remove_listener (observable_token_ptr& token) const
+void observable<T>::remove_listener (token_ptr& token) const
 {
 	token.reset ();
 }
 
 //------------------------------------------------------------------------
 template<typename T>
-void observable<T>::remove_listener (observable_token* token) const
+void observable<T>::remove_listener (token* token) const
 {
 	auto it = std::find_if (listeners.begin (), listeners.end (),
 							[&] (const auto& el) { return el.first == token; });
