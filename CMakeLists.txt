@@ -7,6 +7,7 @@ add_library(vst3utils INTERFACE
 	"include/vst3utils/byteorder_stream.h"
 	"include/vst3utils/enum_array.h"
 	"include/vst3utils/event_iterator.h"
+	"include/vst3utils/events.h"
 	"include/vst3utils/message.h"
 	"include/vst3utils/norm_plain_conversion.h"
 	"include/vst3utils/observable.h"
@@ -75,6 +76,7 @@ if(VST3UTILS_TESTS)
 
 		target_sources(vst3utils_test PRIVATE
 			"tests/attribute_list_test.cpp"
+			"tests/events_test.cpp"
 			"tests/message_test.cpp"
 		)
 
