@@ -184,7 +184,10 @@ inline void message::set_id (const char* mId)
 inline std::string_view message::get_id () const
 {
 	if (msg)
-		return msg->getMessageID ();
+	{
+		if (auto msg_id = msg->getMessageID ())
+			return msg_id;
+	}
 	return {};
 }
 

@@ -27,6 +27,7 @@ target_compile_features(vst3utils
 )
 
 option(VST3UTILS_TESTS "Enable unit test target" OFF)
+set(VST3UTILS_TESTS_SDK_PATH "" CACHE PATH "Path to the VST SDK for unit testing")
 if(VST3UTILS_TESTS)
 
 	enable_testing()
@@ -60,6 +61,34 @@ if(VST3UTILS_TESTS)
 			COMMAND 
 				codesign --force -s - $<TARGET_FILE:vst3utils_test>
 		)
+	endif()
+
+	if(VST3UTILS_TESTS_SDK_PATH)
+		set(SMTG_ENABLE_VSTGUI_SUPPORT 0)
+		set(SMTG_ENABLE_VST3_HOSTING_EXAMPLES 0)
+		set(SMTG_ENABLE_VST3_PLUGIN_EXAMPLES 0)
+		set(SMTG_ADD_VST3_UTILITIES 0)
+		set(SMTG_RUN_VST_VALIDATOR 0)
+		set(SMTG_COREAUDIO_SDK_PATH "")
+		add_subdirectory("${VST3UTILS_TESTS_SDK_PATH}" "${PROJECT_BINARY_DIR}/vst3sdk")
+		smtg_enable_vst3_sdk()
+
+		target_sources(vst3utils_test PRIVATE
+			"tests/message_test.cpp"
+		)
+
+		target_link_libraries(vst3utils_test
+			PRIVATE
+				sdk_hosting
+		)
+
+		if(SMTG_MAC)
+			target_link_libraries(vst3utils_test
+				PRIVATE
+					"-framework CoreFoundation"
+			)
+		endif()
+
 	endif()
 
 	include(GoogleTest)
