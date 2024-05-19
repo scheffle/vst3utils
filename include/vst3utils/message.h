@@ -13,6 +13,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <cassert>
 
 //------------------------------------------------------------------------
 namespace vst3utils {
@@ -135,6 +136,11 @@ struct attribute_list
 									   std::is_same_v<value_t, std::string_view>>* = nullptr>
 	inline std::optional<value_t> get (attribute_id aId) const;
 
+	/** set an utf-16 string value */
+	template<typename value_t,
+			 typename std::enable_if_t<std::is_same_v<value_t, std::u16string>>* = nullptr>
+	inline void set (attribute_id aId, value_t str);
+
 	/** get an utf-16 string value,
 	 *	string_size does not contain the terminating 0 character of the string
 	 */
@@ -144,6 +150,11 @@ struct attribute_list
 
 	/** set binary data */
 	inline void set (attribute_id aId, const void* data, size_t data_size);
+
+	/** set array data */
+	template<typename value_t, typename std::enable_if_t<std::is_standard_layout_v<value_t> &&
+														 std::is_trivial_v<value_t>>* = nullptr>
+	inline void set_array (attribute_id aId, const value_t* data, size_t num_elements);
 
 	template<typename value_t>
 	struct span
@@ -159,8 +170,7 @@ struct attribute_list
 	 */
 	template<typename value_t, size_t num_elements,
 			 typename std::enable_if_t<std::is_standard_layout_v<value_t> &&
-									   std::is_trivial_v<value_t> && !std::is_integral_v<value_t> &&
-									   !std::is_floating_point_v<value_t>>* = nullptr>
+									   std::is_trivial_v<value_t>>* = nullptr>
 	inline std::optional<span<value_t>> get (attribute_id aId) const;
 
 private:
@@ -233,6 +243,7 @@ template<typename value_t, typename std::enable_if_t<
 							   !std::is_integral_v<value_t> && !std::is_floating_point_v<value_t>>*>
 inline void attribute_list::set (attribute_id aId, const value_t& value)
 {
+	static_assert (sizeof (value_t) <= std::numeric_limits<Steinberg::uint32>::max (), "");
 	if (list)
 		list->setBinary (aId, &value, sizeof (value_t));
 }
@@ -319,9 +330,14 @@ template<typename value_t, typename std::enable_if_t<std::is_same_v<value_t, std
 													 std::is_same_v<value_t, std::string>>*>
 inline void attribute_list::set (attribute_id aId, value_t str)
 {
+	if (str.size () > std::numeric_limits<Steinberg::uint32>::max ())
+	{
+		assert (false);
+		return;
+	}
 	if (list)
 	{
-		list->setBinary (aId, str.data (), static_cast<uint32_t> (str.size ()));
+		list->setBinary (aId, str.data (), static_cast<Steinberg::uint32> (str.size ()));
 	}
 }
 
@@ -336,8 +352,7 @@ inline std::optional<value_t> attribute_list::get (attribute_id aId) const
 		Steinberg::uint32 data_size {};
 		if (list->getBinary (aId, data, data_size) == Steinberg::kResultTrue)
 		{
-			return std::make_optional (
-				std::string (reinterpret_cast<const char*> (data), data_size));
+			return std::make_optional (value_t (reinterpret_cast<const char*> (data), data_size));
 		}
 	}
 	return {};
@@ -345,12 +360,23 @@ inline std::optional<value_t> attribute_list::get (attribute_id aId) const
 
 //------------------------------------------------------------------------
 template<typename value_t, typename std::enable_if_t<std::is_same_v<value_t, std::u16string>>*>
+inline void attribute_list::set (attribute_id aId, value_t str)
+{
+	if (list)
+	{
+		list->setString (aId, str.data ());
+	}
+}
+
+//------------------------------------------------------------------------
+template<typename value_t, typename std::enable_if_t<std::is_same_v<value_t, std::u16string>>*>
 inline std::optional<value_t> attribute_list::get (attribute_id aId, size_t string_size) const
 {
-	if (list && string_size <= std::numeric_limits<Steinberg::uint32>::max ())
+	static_assert (sizeof (Steinberg::Vst::TChar) == sizeof (std::u16string::value_type),
+				   "Unsupported Platform");
+	if (list && ((1u + string_size) * sizeof (Steinberg::Vst::TChar)) <=
+					std::numeric_limits<Steinberg::uint32>::max ())
 	{
-		static_assert (sizeof (Steinberg::Vst::TChar) == sizeof (std::u16string::value_type),
-					   "Unsupported Platform");
 		std::u16string res;
 		res.resize (string_size);
 		if (list->getString (aId, res.data (),
@@ -366,6 +392,11 @@ inline std::optional<value_t> attribute_list::get (attribute_id aId, size_t stri
 //------------------------------------------------------------------------
 inline void attribute_list::set (attribute_id aId, const void* data, size_t data_size)
 {
+	if (data_size > std::numeric_limits<Steinberg::uint32>::max ())
+	{
+		assert (false);
+		return;
+	}
 	if (list)
 	{
 		list->setBinary (aId, data, static_cast<Steinberg::uint32> (data_size));
@@ -373,10 +404,26 @@ inline void attribute_list::set (attribute_id aId, const void* data, size_t data
 }
 
 //------------------------------------------------------------------------
+template<typename value_t, typename std::enable_if_t<std::is_standard_layout_v<value_t> &&
+													 std::is_trivial_v<value_t>>*>
+inline void attribute_list::set_array (attribute_id aId, const value_t* data, size_t num_elements)
+{
+	if (sizeof (value_t) * num_elements > std::numeric_limits<Steinberg::uint32>::max ())
+	{
+		assert (false);
+		return;
+	}
+	if (list)
+	{
+		list->setBinary (aId, data,
+						 static_cast<Steinberg::uint32> (sizeof (value_t) * num_elements));
+	}
+}
+
+//------------------------------------------------------------------------
 template<
 	typename value_t, size_t num_elements,
-	typename std::enable_if_t<std::is_standard_layout_v<value_t> && std::is_trivial_v<value_t> &&
-							  !std::is_integral_v<value_t> && !std::is_floating_point_v<value_t>>*>
+	typename std::enable_if_t<std::is_standard_layout_v<value_t> && std::is_trivial_v<value_t>>*>
 inline std::optional<attribute_list::span<value_t>> attribute_list::get (attribute_id aId) const
 {
 	if (list)

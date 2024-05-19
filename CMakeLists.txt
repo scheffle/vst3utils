@@ -74,6 +74,7 @@ if(VST3UTILS_TESTS)
 		smtg_enable_vst3_sdk()
 
 		target_sources(vst3utils_test PRIVATE
+			"tests/attribute_list_test.cpp"
 			"tests/message_test.cpp"
 		)
 
