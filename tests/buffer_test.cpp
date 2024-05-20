@@ -64,4 +64,14 @@ TEST (buffer_test, iterator)
 }
 
 //------------------------------------------------------------------------
+TEST (buffer_test, alignment)
+{
+	constexpr auto alignment = 512u;
+	aligned_buffer<double, alignment> b (100);
+
+	auto ptr = reinterpret_cast<intptr_t> (b.begin ());
+	EXPECT_EQ (ptr % alignment, 0);
+}
+
+//------------------------------------------------------------------------
 } // vst3utils
