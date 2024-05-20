@@ -12,14 +12,12 @@
 //------------------------------------------------------------------------
 namespace vst3utils {
 
-using event_type = Steinberg::Vst::Event::EventTypes;
-
 //------------------------------------------------------------------------
 TEST (events_test, dispatch_default_return)
 {
 	default_event_handler handler;
 
-	Steinberg::Vst::Event e {};
+	event e {};
 	for (uint32_t type = event_type::kNoteOnEvent; type <= event_type::kLegacyMIDICCOutEvent;
 		 ++type)
 	{
@@ -31,7 +29,7 @@ TEST (events_test, dispatch_default_return)
 //------------------------------------------------------------------------
 TEST (events_test, note_on_event)
 {
-	Steinberg::Vst::Event e {};
+	event e {};
 	e.type = event_type::kNoteOnEvent;
 
 	struct eh final : default_event_handler
@@ -49,7 +47,7 @@ TEST (events_test, note_on_event)
 //------------------------------------------------------------------------
 TEST (events_test, note_off_event)
 {
-	Steinberg::Vst::Event e {};
+	event e {};
 	e.type = event_type::kNoteOffEvent;
 
 	struct eh final : default_event_handler
@@ -67,7 +65,7 @@ TEST (events_test, note_off_event)
 //------------------------------------------------------------------------
 TEST (events_test, data_event)
 {
-	Steinberg::Vst::Event e {};
+	event e {};
 	e.type = event_type::kDataEvent;
 
 	struct eh final : default_event_handler
@@ -82,7 +80,7 @@ TEST (events_test, data_event)
 //------------------------------------------------------------------------
 TEST (events_test, poly_pressure_event)
 {
-	Steinberg::Vst::Event e {};
+	event e {};
 	e.type = event_type::kPolyPressureEvent;
 
 	struct eh final : default_event_handler
@@ -100,7 +98,7 @@ TEST (events_test, poly_pressure_event)
 //------------------------------------------------------------------------
 TEST (events_test, note_expression_value_event)
 {
-	Steinberg::Vst::Event e {};
+	event e {};
 	e.type = event_type::kNoteExpressionValueEvent;
 
 	struct eh final : default_event_handler
@@ -119,7 +117,7 @@ TEST (events_test, note_expression_value_event)
 //------------------------------------------------------------------------
 TEST (events_test, note_expression_text_event)
 {
-	Steinberg::Vst::Event e {};
+	event e {};
 	e.type = event_type::kNoteExpressionTextEvent;
 
 	struct eh final : default_event_handler
@@ -138,7 +136,7 @@ TEST (events_test, note_expression_text_event)
 //------------------------------------------------------------------------
 TEST (events_test, chord_event)
 {
-	Steinberg::Vst::Event e {};
+	event e {};
 	e.type = event_type::kChordEvent;
 
 	struct eh final : default_event_handler
@@ -153,7 +151,7 @@ TEST (events_test, chord_event)
 //------------------------------------------------------------------------
 TEST (events_test, scale_event)
 {
-	Steinberg::Vst::Event e {};
+	event e {};
 	e.type = event_type::kScaleEvent;
 
 	struct eh final : default_event_handler
@@ -168,7 +166,7 @@ TEST (events_test, scale_event)
 //------------------------------------------------------------------------
 TEST (events_test, unknown_event)
 {
-	Steinberg::Vst::Event e {};
+	event e {};
 	e.type = event_type::kScaleEvent + 1;
 
 	struct eh final : default_event_handler
