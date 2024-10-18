@@ -64,6 +64,10 @@ if(VST3UTILS_TESTS)
 		)
 	endif()
 
+	if(SMTG_WIN)
+		target_compile_options(vst3utils_test PRIVATE "/utf-8" "/Zc:__cplusplus")
+	endif()
+
 	if(VST3UTILS_TESTS_SDK_PATH)
 		set(SMTG_ENABLE_VSTGUI_SUPPORT 0)
 		set(SMTG_ENABLE_VST3_HOSTING_EXAMPLES 0)

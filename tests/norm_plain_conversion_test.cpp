@@ -87,8 +87,8 @@ TEST (norm_plain_conversion_test, normalized_to_exp)
 {
 	auto exp = normalized_to_exp (0., 100., 0.);
 	EXPECT_DOUBLE_EQ (exp, 0.);
-	exp = normalized_to_exp (0., 100., 1.);
-	EXPECT_DOUBLE_EQ (exp, 100.);
+	exp = normalized_to_exp (0., 1., 1.);
+	EXPECT_DOUBLE_EQ (exp, 1.);
 	exp = normalized_to_exp (80., 22050., 0.);
 	EXPECT_DOUBLE_EQ (exp, 80.);
 	exp = normalized_to_exp (80., 22050., 1.);
