@@ -255,7 +255,7 @@ TEST (attribute_list_test, struct)
 template<typename distribution_t = std::uniform_int_distribution<>,
 		 typename algo_t = std::default_random_engine, typename device_t = std::random_device,
 		 typename value_t>
-void randomizeMemory (value_t& begin, value_t& end)
+void randomizeMemory (const value_t& begin, const value_t& end)
 {
 	device_t rd;
 	algo_t gen (rd ());
