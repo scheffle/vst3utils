@@ -17,6 +17,7 @@ add_library(vst3utils INTERFACE
 	"include/vst3utils/parameter.h"
 	"include/vst3utils/smooth_value.h"
 	"include/vst3utils/string_conversion.h"
+	"include/vst3utils/transport_state_observer.h"
 	"ReadMe.md"
 )
 
@@ -42,6 +43,7 @@ if(VST3UTILS_TESTS)
 		"tests/norm_plain_conversion_test.cpp"
 		"tests/observable_test.cpp"
 		"tests/string_conversion_test.cpp"
+		"tests/transport_state_observer_test.cpp"
 	)
 
 	target_link_libraries(vst3utils_test
