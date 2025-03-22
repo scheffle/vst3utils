@@ -16,6 +16,10 @@
 #include <malloc.h>
 #endif
 
+#if __APPLE__
+#include <AvailabilityMacros.h>
+#endif
+
 //------------------------------------------------------------------------
 namespace vst3utils {
 
@@ -111,7 +115,7 @@ struct alignment_allocator
 		if (alignment == 0)
 			return malloc (numBytes);
 		void* data {nullptr};
-#if SMTG_OS_MACOS && MAC_OS_X_VERSION_MIN_REQUIRED < MAC_OS_X_VERSION_10_15
+#if __APPLE__ && MAC_OS_X_VERSION_MIN_REQUIRED < MAC_OS_X_VERSION_10_15
 		posix_memalign (&data, alignment, numBytes);
 #elif defined(_MSC_VER)
 		data = _aligned_malloc (numBytes, alignment);
