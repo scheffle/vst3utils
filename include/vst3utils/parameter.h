@@ -15,6 +15,8 @@
 #include <functional>
 #include <string>
 #include <vector>
+#include <algorithm>
+#include <iterator>
 
 #if !defined(__cpp_lib_to_chars) || !defined(__cpp_lib_to_chars)
 #include "pluginterfaces/base/ustring.h"
@@ -115,7 +117,10 @@ private:
 
 	const param::description& desc;
 	std::vector<std::pair<value_changed_func, token>> listeners;
+	std::vector<std::pair<value_changed_func, token>> listeners_to_add;
+	std::vector<token> listeners_to_remove;
 	token tokenCounter {0};
+	int32_t iterating_listeners {0};
 
 	to_plain_func to_plain {};
 	to_normalized_func to_normalized {};
@@ -185,17 +190,27 @@ inline void parameter::set_custom_from_string_func (const from_string_func& func
 inline auto parameter::add_listener (const value_changed_func& func) -> token
 {
 	auto token = ++tokenCounter;
-	listeners.emplace_back (func, token);
+	if (iterating_listeners)
+		listeners_to_add.emplace_back (func, token);
+	else
+		listeners.emplace_back (func, token);
 	return token;
 }
 
 //------------------------------------------------------------------------
 inline void parameter::remove_listener (token t)
 {
-	auto it = std::find_if (listeners.begin (), listeners.end (),
-							[&] (const auto& p) { return p.second == t; });
-	if (it != listeners.end ())
-		listeners.erase (it);
+	if (iterating_listeners)
+	{
+		listeners_to_remove.emplace_back (t);
+	}
+	else
+	{
+		auto it = std::find_if (listeners.begin (), listeners.end (),
+								[&] (const auto& p) { return p.second == t; });
+		if (it != listeners.end ())
+			listeners.erase (it);
+	}
 }
 
 //------------------------------------------------------------------------
@@ -317,8 +332,24 @@ inline void parameter::changed (Steinberg::int32 msg)
 	Steinberg::Vst::Parameter::changed (msg);
 	if (msg == kChanged)
 	{
+		++iterating_listeners;
 		std::for_each (listeners.begin (), listeners.end (),
 					   [this] (const auto& p) { p.first (*this, getNormalized ()); });
+		--iterating_listeners;
+		if (iterating_listeners == 0)
+		{
+			if (!listeners_to_add.empty ())
+			{
+				std::move (listeners_to_add.begin (), listeners_to_add.end (),
+						   std::back_inserter (listeners));
+				listeners_to_add.clear ();
+			}
+			if (!listeners_to_remove.empty ())
+			{
+				std::for_each (listeners_to_remove.begin (), listeners_to_remove.end (),
+							   [&] (auto& el) { remove_listener (el); });
+			}
+		}
 	}
 }
 

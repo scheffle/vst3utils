@@ -10,6 +10,7 @@
 
 #include "vst3utils/norm_plain_conversion.h"
 #include <variant>
+#include <array>
 
 //------------------------------------------------------------------------
 namespace vst3utils {
@@ -34,7 +35,7 @@ struct range
 //------------------------------------------------------------------------
 /** Parameter step count description
 
-describes a parameter with a concret number of steps. if a stringList is provided the number of
+describes a parameter with a concret number of steps. if a string_list is provided the number of
 strings must be equal to the number of steps.
 
  */
@@ -136,6 +137,22 @@ inline constexpr convert_func make_exp_to_normalized_func ()
 }
 
 //------------------------------------------------------------------------
+inline constexpr convert_func make_normalized_to_db_func ()
+{
+	return [] (double v) {
+		return gain_to_db (v);
+	};
+}
+
+//------------------------------------------------------------------------
+inline constexpr convert_func make_db_to_normalized_func ()
+{
+	return [] (double v) {
+		return db_to_gain (v);
+	};
+}
+
+//------------------------------------------------------------------------
 template<int32_t min, int32_t max>
 inline constexpr convert_functions linear_functions ()
 {
@@ -155,6 +172,12 @@ inline constexpr convert_functions steps_functions ()
 {
 	return {make_normalized_to_steps_func<num_steps, start_value> (),
 			make_steps_to_normalized_func<num_steps, start_value> ()};
+}
+
+//------------------------------------------------------------------------
+inline constexpr convert_functions db_functions ()
+{
+	return {make_normalized_to_db_func (), make_db_to_normalized_func ()};
 }
 
 //------------------------------------------------------------------------

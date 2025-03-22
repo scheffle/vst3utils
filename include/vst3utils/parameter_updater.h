@@ -24,7 +24,7 @@ Example:
 Create a throttled_parameter_updater variable in your AudioEffect
 
 ```
-parameter_updater peakParamUpdate {ParameterID::Peak};
+throttled_parameter_updater peakParamUpdate {ParameterID::Peak};
 ```
 
 Initialize it with the sample rate and the update rate

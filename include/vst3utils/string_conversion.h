@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <cassert>
 #include <string>
 #include <string_view>
@@ -18,20 +19,34 @@ namespace vst3utils {
 //------------------------------------------------------------------------
 /** copy UTF-16 string to an ASCII string
  *
- *  all non ASCII characters are removed in this conversion
+ *  All non-ASCII characters are replaced with the replacement_char if its value is greater than
+ *	zero.
  */
+template<char replacement_char>
 inline std::string copy_utf16_to_ascii (std::u16string_view str)
 {
 	std::string result;
 	std::for_each (str.begin (), str.end (), [&result] (const auto& c) {
 		if (c >= 0 && c <= 127)
 			result.push_back (static_cast<char> (c));
+		else if constexpr (replacement_char > 0)
+			result.push_back (replacement_char);
 	});
 	return result;
 }
 
 //------------------------------------------------------------------------
-/** create UTF-16 string from ASCII string */
+/** copy UTF-16 string to an ASCII string
+ *
+ *  All non-ASCII characters are removed during this conversion.
+ */
+inline std::string copy_utf16_to_ascii (std::u16string_view str)
+{
+	return copy_utf16_to_ascii<0> (str);
+}
+
+//------------------------------------------------------------------------
+/** create an UTF-16 string from an ASCII string */
 inline std::u16string create_utf16_from_ascii (std::string_view ascii)
 {
 	std::u16string result;
@@ -41,7 +56,7 @@ inline std::u16string create_utf16_from_ascii (std::string_view ascii)
 }
 
 //------------------------------------------------------------------------
-/** copy ASCII string to UTF-16 buffer */
+/** copy an ASCII string to an UTF-16 buffer */
 inline void copy_ascii_to_utf16 (std::string_view ascii, char16_t* start, char16_t* end)
 {
 	assert (start < end);
@@ -58,10 +73,15 @@ inline void copy_ascii_to_utf16 (std::string_view ascii, char16_t* start, char16
 		++start;
 		++src;
 	}
-	while (start != end)
+	if (start == end)
+		*(start - 1) = 0;
+	else
 	{
-		*start = 0;
-		++start;
+		while (start != end)
+		{
+			*start = 0;
+			++start;
+		}
 	}
 }
 

@@ -9,6 +9,7 @@
 #pragma once
 
 #include <cassert>
+#include <type_traits>
 
 //------------------------------------------------------------------------
 namespace vst3utils {
@@ -25,6 +26,12 @@ struct smooth_value
 	static_assert (std::is_floating_point_v<T>, "Must be a floating point type");
 	static const constexpr T alpha_min = static_cast<T> (0.);
 	static const constexpr T alpha_max = static_cast<T> (1.);
+
+	smooth_value (T initalValue = {}, T alpha = 0.1) : value (initalValue), alpha (alpha) { flush (); }
+	smooth_value (const smooth_value&) = default;
+	smooth_value (smooth_value&&) = default;
+	smooth_value& operator= (const smooth_value&) = default;
+	smooth_value& operator= (smooth_value&&) = default;
 
 	/** smooth the parameter further and return the smoothed value */
 	inline T process () noexcept
@@ -65,6 +72,9 @@ struct smooth_value
 
 	/** set the smoothed value to the actual value */
 	inline void flush () noexcept { smoothed_value = value; }
+
+	/** set the smoothed value and the actual value */
+	inline void set_flushed (T v) noexcept { smoothed_value = value = v; }
 
 private:
 	T alpha {0.1};

@@ -38,7 +38,17 @@ inline constexpr return_t normalized_to_steps (int32_t num_steps, int32_t start_
 template<typename T>
 inline constexpr T normalized_to_exp (T min, T max, T normalized_value) noexcept
 {
-	return min * gcem::exp (normalized_value * gcem::log (max / min));
+	auto min_is_zero = min == static_cast<T> (0);
+	if (min_is_zero)
+		min += std::numeric_limits<T>::epsilon ();
+	auto result = min * gcem::exp (normalized_value * gcem::log (max / min));
+	if (min_is_zero)
+	{
+		result -= std::numeric_limits<T>::epsilon ();
+		min -= std::numeric_limits<T>::epsilon ();
+	}
+	result = std::clamp (result, min, max);
+	return result;
 }
 
 //------------------------------------------------------------------------
@@ -61,7 +71,27 @@ inline constexpr return_t steps_to_normalized (int32_t num_steps, int32_t start_
 template<typename T>
 inline constexpr T exp_to_normalized (T min, T max, T plain_value) noexcept
 {
-	return gcem::log (plain_value / min) / gcem::log (max / min);
+	auto min_is_zero = min == static_cast<T> (0);
+	if (min_is_zero)
+		min += std::numeric_limits<T>::epsilon ();
+	auto result = gcem::log (plain_value / min) / gcem::log (max / min);
+	result = std::clamp (result, 0., 1.);
+	return result;
+}
+
+//------------------------------------------------------------------------
+template<typename T>
+inline constexpr T gain_to_db (T gain_value) noexcept
+{
+	return static_cast<T> (20. * gcem::log10 (gain_value));
+}
+
+//------------------------------------------------------------------------
+template<typename T>
+inline constexpr T db_to_gain (T db_value) noexcept
+{
+	constexpr const auto inv20 = static_cast<T> (1. / 20.);
+	return static_cast<T> (gcem::pow (10, db_value * inv20));
 }
 
 //------------------------------------------------------------------------

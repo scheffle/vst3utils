@@ -9,6 +9,7 @@
 #pragma once
 
 #include "pluginterfaces/vst/ivstparameterchanges.h"
+#include <cassert>
 
 //------------------------------------------------------------------------
 namespace vst3utils {

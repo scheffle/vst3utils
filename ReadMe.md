@@ -1,6 +1,6 @@
 # vst3utils
 
-a c++ header only library with little helper classes for writing vst3 plug-ins.
+A C++ header-only library providing little helper classes for developing vst3 plug-ins.
 
 ## Requirements
 
@@ -9,9 +9,9 @@ a c++ header only library with little helper classes for writing vst3 plug-ins.
 
 ## Usage
 
-Eiher add a header include directory pointing to the 'include' repository path or
-if you use cmake then just add this directoy in cmake with `add_subdirectory` and add a
-target dependency to your own target:
+You can either add a header include directory pointing to the 'include' repository path or, 
+if you use CMake, simply add this directory to CMake with `add_subdirectory` and add a target 
+dependency to your own target.
 
 ```cmake
 add_subdirectory("path/to/vst3utils" ${PROJECT_BINARY_DIR}/vst3utils)
@@ -24,6 +24,14 @@ add_target_dependency(myTarget
 
 ## History
 
+- **Version 1.2.0** [03/22/2025]
+	- added unit tests
+	- added transport_state_observer
+	- added event dispatcher helper
+	- added observable template
+	- added RAII memory buffer object
+	- added byte_order_stream.h
+	- added dB to gain functions
 - **Version 1.1.0** [08/03/2023]
 	- added messages.h and parameter_changes_iterator.h
 	- a few additions else where, see git commit history
@@ -31,6 +39,16 @@ add_target_dependency(myTarget
 	- initial release
 
 ## Headers
+
+### `#include "vst3utils/buffer.h`
+
+- `vst3utils::buffer`
+	- RAII memory buffer object with support for aligned memory
+
+### `#include "vst3utils/byte_order_stream.h`
+
+- `vst3utils::byte_order_ibstream`
+	- an adapter to read/write byte ordered data to an IBStream
 
 ### `#include "vst3utils/enum_array.h`
 
@@ -41,6 +59,11 @@ add_target_dependency(myTarget
 
 - `vst3utils::event_iterator`
 	- a c++ compatible forward iterator for `Steinberg::Vst::Event`
+
+### `#include "vst3utils/events.h"`
+
+- `vst3utils::dispatch_event`
+	- function to dispatch a `Steinberg::Vst::Event`
 
 ### `#include "vst3utils/message.h"`
 
@@ -59,6 +82,13 @@ contains functions to convert from normalized to plain and back
 - `vst3utils::plain_to_normalized`
 - `vst3utils::steps_to_normalized`
 - `vst3utils::exp_to_normalized`
+- `vst3utils::db_to_gain`
+- `vst3utils::gain_to_db`
+
+### `#include "vst3utils/observable.h"`
+
+- `vst3utils::observable`
+	- template to observe an object by multiple listeners without direct dependency
 
 ### `#include "vst3utils/parameter_changes_iterator.h`
 
@@ -101,6 +131,11 @@ static constexpr std::array<description, 4> param_desc = {{
 - `vst3utils::copy_utf16_to_ascii`
 - `vst3utils::create_utf16_from_ascii`
 - `vst3utils::copy_ascii_to_utf16`
+
+### `#include "vst3utils/transport_state_observer.h`
+
+- `vst3utils::transport_state_observer`
+	- helper for handling transport state changes
 
 ## License
 
