@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.19.0)
 
-project(vst3utils VERSION 1.0.0)
+project(vst3utils VERSION 1.2.0)
 
 add_library(vst3utils INTERFACE
 	"include/vst3utils/buffer.h"
